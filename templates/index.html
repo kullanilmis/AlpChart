@@ -1,626 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr" data-theme="monochrome">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alp-g // MULTI-CHART TERMINAL</title>
 
-    <!-- Modern Editorial Fonts -->
+    <!-- Editorial Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
         rel="stylesheet">
 
-    <!-- TradingView Lightweight Charts CDN -->
+    <!-- Terminal Stylesheet -->
+    <link rel="stylesheet" href="/static/css/terminal.css">
+
+    <!-- TradingView Lightweight Charts v4.1.1 CDN -->
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
-
-    <style>
-        /* Modern, ultra-clean, dark-themed (monochrome/e-ink inspired) editorial UI style */
-        :root {
-            --bg-color: #0b0b0c;
-            --panel-bg: #121214;
-            --border-color: #222226;
-            --border-color-active: #3e3e46;
-            --text-main: #f4f4f5;
-            --text-muted: #71717a;
-            --accent-green: #22c55e;
-            --accent-red: #ef4444;
-            --accent-green-bg: rgba(34, 197, 94, 0.15);
-            --accent-red-bg: rgba(239, 68, 68, 0.15);
-            --font-editorial: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: var(--font-editorial);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Top Header Control Bar */
-        header {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            height: 56px;
-            background-color: var(--bg-color);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 10;
-        }
-
-        .header-center {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-        }
-
-        .brand-link {
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            font-size: 13px;
-            letter-spacing: 0.05em;
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .brand-link:hover {
-            color: var(--text-main);
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand h1 {
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--text-main);
-            font-family: var(--font-mono);
-        }
-
-        .brand-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--text-main);
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite ease-in-out;
-        }
-
-        @keyframes pulse-dot {
-            0% {
-                opacity: 0.3;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.3;
-            }
-        }
-
-        .layout-controls {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .layout-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-        }
-
-        .btn-group {
-            display: flex;
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 2px;
-        }
-
-        .btn-layout {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 500;
-            padding: 6px 14px;
-            cursor: pointer;
-            border-radius: 3px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-layout:hover {
-            color: var(--text-main);
-        }
-
-        .btn-layout.active {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Dynamic Grid Layout */
-        .chart-grid {
-            flex-grow: 1;
-            display: grid;
-            gap: 1px;
-            /* Crisp borders between panes */
-            background-color: var(--border-color);
-            height: calc(100vh - 56px);
-            width: 100vw;
-        }
-
-        /* Layout Grid Classes */
-        .grid-1 {
-            grid-template-columns: 1fr;
-            grid-template-rows: 1fr;
-        }
-
-        .grid-2 {
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr;
-        }
-
-        .grid-4 {
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-        }
-
-        .grid-6 {
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-        }
-
-        .grid-8 {
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-        }
-
-        /* Individual Pane Style */
-        .chart-pane {
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        /* Pane Header / Ticker Bar */
-        .pane-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 36px;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-            user-select: none;
-        }
-
-        .pane-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .pane-source-badge {
-            font-size: 9px;
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            padding: 2px 6px;
-            border-radius: 2px;
-            letter-spacing: 0.05em;
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-        }
-
-        .pane-symbol-timeframe {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-main);
-            font-family: var(--font-mono);
-        }
-
-        .pane-ticker {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 3px;
-            transition: background-color 0.4s ease, color 0.4s ease;
-        }
-
-        /* Flashing micro-animations */
-        @keyframes flash-up-anim {
-            0% {
-                background-color: var(--accent-green-bg);
-                color: var(--accent-green);
-            }
-
-            100% {
-                background-color: transparent;
-                color: inherit;
-            }
-        }
-
-        @keyframes flash-down-anim {
-            0% {
-                background-color: var(--accent-red-bg);
-                color: var(--accent-red);
-            }
-
-            100% {
-                background-color: transparent;
-                color: inherit;
-            }
-        }
-
-        .flash-up {
-            animation: flash-up-anim 0.8s ease-out forwards;
-        }
-
-        .flash-down {
-            animation: flash-down-anim 0.8s ease-out forwards;
-        }
-
-        .pane-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 10px;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: var(--text-muted);
-            transition: background-color 0.3s ease;
-        }
-
-        .status-dot.connected {
-            background-color: var(--accent-green);
-            box-shadow: 0 0 6px var(--accent-green);
-        }
-
-        .status-dot.connecting {
-            background-color: #f59e0b;
-            /* Amber */
-            animation: pulse-dot 1s infinite alternate;
-        }
-
-        .status-dot.disconnected {
-            background-color: var(--accent-red);
-        }
-
-        /* Low-profile Overlay Control Bar */
-        .pane-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            height: 36px;
-            padding: 0 12px;
-            background-color: var(--panel-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .pane-select {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            padding: 4px 8px;
-            outline: none;
-            cursor: pointer;
-            transition: border-color 0.2s ease;
-        }
-
-        input.pane-select {
-            width: 100px;
-            cursor: text;
-        }
-
-        .pane-select:focus {
-            border-color: var(--border-color-active);
-        }
-
-        .pane-btn-submit {
-            background-color: var(--panel-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            padding: 4px 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 23px;
-        }
-
-        .pane-btn-submit:hover {
-            border-color: var(--border-color-active);
-            background-color: var(--bg-color);
-            color: var(--accent-green);
-        }
-
-        .pane-btn-submit.active {
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-            background-color: var(--bg-color);
-        }
-
-        .pane-content-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: row;
-            height: calc(100% - 72px);
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .chart-wrapper {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            height: 100%;
-            width: 100%;
-            position: relative;
-        }
-
-        .pane-indicator-panel {
-            position: absolute;
-            top: 0;
-            left: -140px;
-            width: 140px;
-            height: 100%;
-            background-color: rgba(11, 11, 12, 0.96);
-            border-right: 1px solid var(--border-color);
-            z-index: 10;
-            padding: 12px 10px;
-            transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.6);
-            box-sizing: border-box;
-        }
-
-        .pane-indicator-panel.active {
-            left: 0;
-        }
-
-        .pane-tool-panel {
-            position: absolute;
-            top: 0;
-            left: -140px;
-            width: 140px;
-            height: 100%;
-            background-color: rgba(11, 11, 12, 0.96);
-            border-right: 1px solid var(--border-color);
-            z-index: 10;
-            padding: 12px 10px;
-            transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.6);
-            box-sizing: border-box;
-        }
-
-        .pane-tool-panel.active {
-            left: 0;
-        }
-
-        .tool-btn {
-            background-color: var(--bg-color);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            padding: 6px 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-            width: 100%;
-            display: block;
-        }
-
-        .tool-btn:hover {
-            border-color: var(--border-color-active);
-            color: var(--text-main);
-            background-color: var(--panel-bg);
-        }
-
-        .tool-btn.active {
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-            background-color: var(--bg-color);
-        }
-
-        .tool-btn.action-btn-clear {
-            border-color: var(--accent-red);
-            color: var(--accent-red);
-            background-color: rgba(239, 68, 68, 0.05);
-            text-align: center;
-            margin-top: auto;
-        }
-
-        .tool-btn.action-btn-clear:hover {
-            background-color: var(--accent-red);
-            color: var(--text-main);
-        }
-
-        .indicator-title {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-main);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 6px;
-            margin-bottom: 4px;
-        }
-
-        .indicator-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--text-muted);
-            cursor: pointer;
-            user-select: none;
-            padding: 4px 0;
-            transition: color 0.2s ease;
-        }
-
-        .indicator-item:hover {
-            color: var(--text-main);
-        }
-
-        .indicator-item input[type="checkbox"] {
-            cursor: pointer;
-            accent-color: var(--accent-green);
-            margin: 0;
-        }
-
-        .pane-rsi-container {
-            width: 100%;
-            height: 30%;
-            position: relative;
-            background-color: var(--bg-color);
-            border-top: 1px solid var(--border-color);
-            box-sizing: border-box;
-            display: none;
-        }
-
-
-
-        /* Chart Canvas Area */
-        .pane-chart-container {
-            flex-grow: 1;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background-color: var(--bg-color);
-        }
-
-        .pane-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(11, 11, 12, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        .pane-loader.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        /* Custom scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-color);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--border-color-active);
-        }
-    </style>
 </head>
 
 <body>
-
-    <!-- Header / Global Controls -->
+    <!-- Top Header / Global Terminal Controls -->
     <header>
-        <div class="brand">
-            <div class="brand-dot"></div>
-            <h1>Alp-g // MULTI-CHART TERMINAL</h1>
+        <div class="header-left">
+            <div class="brand">
+                <div class="brand-dot"></div>
+                <h1>Alp-g // MULTI-CHART TERMINAL</h1>
+            </div>
         </div>
-        <div class="header-center">
-            <a href="https://www.alp-g.com" target="_blank" class="brand-link">www.alp-g.com</a>
+
+        <div class="header-center-controls">
+            <div class="header-group">
+                <span class="header-group-label">Sync</span>
+                <div class="btn-group">
+                    <button type="button" class="hdr-btn" id="sync-crosshair" title="Paneller arası crosshair senkronizasyonu">Crosshair</button>
+                    <button type="button" class="hdr-btn" id="sync-time" title="Paneller arası zaman aralığı senkronizasyonu">Zaman</button>
+                    <button type="button" class="hdr-btn" id="sync-symbol" title="Paneller arası sembol senkronizasyonu">Sembol</button>
+                </div>
+            </div>
+
+            <div class="header-group">
+                <div class="btn-group">
+                    <button type="button" class="hdr-btn" id="btn-theme-toggle" title="Tema değiştir (Monokrom / Klasik TV)">Monokrom</button>
+                    <button type="button" class="hdr-btn" id="btn-timezone-toggle" title="Saat dilimi değiştir">UTC+3</button>
+                </div>
+            </div>
         </div>
-        <div class="layout-controls">
-            <span class="layout-label">Layout Panes</span>
-            <div class="btn-group" id="layout-selector">
-                <button class="btn-layout" data-panes="1" id="btn-layout-1">1</button>
-                <button class="btn-layout" data-panes="2" id="btn-layout-2">2</button>
-                <button class="btn-layout active" data-panes="4" id="btn-layout-4">4</button>
-                <button class="btn-layout" data-panes="6" id="btn-layout-6">6</button>
-                <button class="btn-layout" data-panes="8" id="btn-layout-8">8</button>
+
+        <div class="header-right">
+            <div class="header-group">
+                <span class="header-group-label">Düzen</span>
+                <div class="btn-group" id="layout-selector">
+                    <button type="button" class="btn-layout" data-panes="1" id="btn-layout-1">1</button>
+                    <button type="button" class="btn-layout" data-panes="2" id="btn-layout-2">2</button>
+                    <button type="button" class="btn-layout active" data-panes="4" id="btn-layout-4">4</button>
+                    <button type="button" class="btn-layout" data-panes="6" id="btn-layout-6">6</button>
+                    <button type="button" class="btn-layout" data-panes="8" id="btn-layout-8">8</button>
+                </div>
+            </div>
+
+            <div class="header-group">
+                <button type="button" class="hdr-btn hdr-btn-standalone active" id="btn-watchlist-toggle" title="Watchlist ve Alarmlar kenar çubuğunu aç/kapat">Watchlist</button>
+                <div class="btn-group">
+                    <button type="button" class="hdr-btn" id="btn-backup-export" title="Tüm ayar, çizim, watchlist ve alarmları JSON olarak indir">Dışa Aktar</button>
+                    <button type="button" class="hdr-btn" id="btn-backup-import" title="JSON yedek dosyasından geri yükle">İçe Aktar</button>
+                </div>
+                <input type="file" id="input-backup-file" accept=".json,application/json" hidden>
+                <button type="button" class="hdr-btn hdr-btn-standalone hdr-btn-icon" id="btn-shortcuts-help" title="Klavye Kısayolları (?)">?</button>
             </div>
         </div>
     </header>
 
-    <!-- Grid Container -->
-    <main class="chart-grid grid-4" id="chart-grid-container">
-        <!-- Chart Panes will be dynamically injected here by Javascript -->
-    </main>
+    <!-- Main Workspace Shell -->
+    <div class="workspace-shell">
+        <main class="chart-grid grid-4" id="chart-grid-container">
+            <!-- Chart panes are dynamically mounted by main.js -->
+        </main>
+        <aside class="watchlist-sidebar" id="watchlist-sidebar">
+            <!-- WatchlistPanel mounts Watchlist & Alarmlar tabs here -->
+        </aside>
+    </div>
 
-    <!-- Project Logic Script -->
-    <script src="/static/js/chart.js"></script>
+    <!-- Floating Toast Notifications -->
+    <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-backdrop hidden" id="shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title" id="shortcuts-modal-title">Klavye Kısayolları</span>
+                <button type="button" class="modal-close-btn" id="btn-close-shortcuts" aria-label="Kapat">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-list">
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Yatay Çizgi aracı</span>
+                        <span class="shortcut-keys"><kbd>Alt</kbd> + <kbd>H</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Trend Çizgisi aracı</span>
+                        <span class="shortcut-keys"><kbd>Alt</kbd> + <kbd>T</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Fibonacci Düzeltmesi aracı</span>
+                        <span class="shortcut-keys"><kbd>Alt</kbd> + <kbd>F</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Mıknatıs (OHLC yakalama) aç/kapat</span>
+                        <span class="shortcut-keys"><kbd>M</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Geçici mıknatıs (OHLC yakalama)</span>
+                        <span class="shortcut-keys"><kbd>Ctrl</kbd> basılı tutma</span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Geçici ölçüm cetveli (% ve bar)</span>
+                        <span class="shortcut-keys"><kbd>Shift</kbd> + <kbd>Tık</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Aktif grafiği tam ekran yap / küçült</span>
+                        <span class="shortcut-keys"><kbd>Alt</kbd> + <kbd>Enter</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Çizimi geri al / yinele</span>
+                        <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Y</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Seçili çizimi sil</span>
+                        <span class="shortcut-keys"><kbd>Delete</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Aracı iptal et / seçimi temizle / pencereyi kapat</span>
+                        <span class="shortcut-keys"><kbd>Esc</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc">Kısayollar penceresini aç/kapat</span>
+                        <span class="shortcut-keys"><kbd>?</kbd></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Price Alert Modal -->
+    <div class="modal-backdrop hidden" id="quick-alert-modal" role="dialog" aria-modal="true" aria-labelledby="quick-alert-modal-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title" id="quick-alert-modal-title">Hızlı Fiyat Alarmı</span>
+            </div>
+            <div class="modal-body">
+                <div class="qa-symbol-banner" id="qa-symbol-label">BTC (hyperliquid)</div>
+
+                <div class="qa-field">
+                    <label for="qa-condition">Koşul</label>
+                    <select id="qa-condition" class="qa-input">
+                        <option value="cross_above">Üstüne Çıkınca</option>
+                        <option value="cross_below">Altına İnince</option>
+                    </select>
+                </div>
+
+                <div class="qa-field">
+                    <label for="qa-price">Hedef Fiyat</label>
+                    <input type="number" step="any" id="qa-price" class="qa-input" placeholder="0.00">
+                </div>
+
+                <div class="qa-field">
+                    <label for="qa-message">Mesaj (Opsiyonel)</label>
+                    <input type="text" id="qa-message" class="qa-input" placeholder="Örn. Direnç kırılımı">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn" id="qa-cancel">İptal</button>
+                <button type="button" class="modal-btn modal-btn-primary" id="qa-submit">Alarm Oluştur</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modular Application Entrypoint -->
+    <script type="module" src="/static/js/main.js"></script>
 </body>
 
 </html>

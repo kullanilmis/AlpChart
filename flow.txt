@@ -1,0 +1,618 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+//rev 7 internal
+// © hilmituncay @alp_g
+
+//@version=5
+indicator("Alp_g Flow V2.5","Alp_g Flow V2.5",overlay =  true, 
+ max_bars_back = 5000, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 500)
+timetest = input.time(defval = 0 , title = "Start Time" , group = " -----------TIME-----------")
+
+
+uzunluk = input.int(5000, title ="mum sayısı", group = " -----------TIME-----------")
+
+zigzag = input.bool(true, title = "",  group = "ZIGZAG" , inline = "zigzag")
+settColor = input.color(#1c2947, 'Zigzag',  group = "ZIGZAG" , inline = "zigzag") 
+lwitdh  = input.int(1, title ="" , minval=1, maxval=5, step=1 ,group = "ZIGZAG" , inline = "zigzag")
+linestyle = input.string(title="",options=['(─)', '(╌)', '(┈)'],defval='(┈)',  group = "ZIGZAG" , inline = "zigzag")
+lineStyle = linestyle == "(┈)" ? line.style_dotted : linestyle == "(╌)" ? line.style_dashed : line.style_solid
+
+cizgi = input.bool(true, title = "KAPANIŞ",   group = "Line" , inline = "close")
+settColorclose = input.color(color.black, '',  group = "Line" , inline = "close")
+lwitdh1  = input.int(1, title ="" , minval=1, maxval=5, step=1 , group = "Line" , inline = "close")
+linestyle1 = input.string(title="",options=['(─)', '(╌)', '(┈)'],defval='(─)',   group = "Line" , inline = "close")
+lineStyleclose = linestyle1 == "(┈)" ? line.style_dotted : linestyle1 == "(╌)" ? line.style_dashed : line.style_solid
+cizgi1 = input.bool(true, title = "SWEEP",   group = "Line" , inline = "sweep")
+settColorsweep = input.color(color.red, '',  group = "Line" , inline = "sweep")
+lwitdh2  = input.int(1, title ="" , minval=1, maxval=5, step=1 , group = "Line" , inline = "sweep")
+linestyle2 = input.string(title="",options=['(─)', '(╌)', '(┈)'],defval='(┈)',  group = "Line" , inline = "sweep")
+lineStylesweep = linestyle2 == "(┈)" ? line.style_dotted : linestyle2 == "(╌)" ? line.style_dashed : line.style_solid
+
+// ==================== KUTU AYARLARI ====================
+showBox = input.bool(true, title = "Kutu Göster", group = "KUTU", inline = "box1")
+longBoxColor = input.color(color.new(color.green, 97), 'Long Kutu', group = "KUTU", inline = "box1")
+longBoxBorder = input.color(#5d606b27, '', group = "KUTU", inline = "box1")
+shortBoxColor = input.color(color.new(color.red, 97), 'Short Kutu', group = "KUTU", inline = "box2")
+shortBoxBorder = input.color(#5d606b27, '', group = "KUTU", inline = "box2")
+showLevels = input.bool(true, title = "Fibonacci Seviyeleri", group = "KUTU", inline = "levels")
+level25Color = input.color(#5d606b, '0.25', group = "KUTU", inline = "levels")
+level50Color = input.color(#5d606b, '0.50', group = "KUTU", inline = "levels")
+level75Color = input.color(#5d606b, '0.75', group = "KUTU", inline = "levels")
+levelLineStyle = input.string(title="Seviye Stili", options=['(─)', '(╌)', '(┈)'], defval='(┈)', group = "KUTU")
+levelStyle = levelLineStyle == "(┈)" ? line.style_dotted : levelLineStyle == "(╌)" ? line.style_dashed : line.style_solid
+
+// ==================== GEÇMİŞ KUTU AYARLARI ====================
+showHistoryBoxes = input.bool(false, title = "Geçmiş Kutuları Göster", group = "GEÇMİŞ KUTULAR", inline = "hist1")
+historyBoxCount = input.int(3, title = "Geçmiş Kutu Adedi", minval = 1, maxval = 50, step = 1, group = "GEÇMİŞ KUTULAR", inline = "hist1")
+
+// ==================== HACİM PROFİLİ AYARLARI ====================
+showVolumeProfile = input.bool(true, title = "Hacim Profili Göster", group = "HACİM PROFİLİ", inline = "vp1")
+vpRowCount = input.int(150, title = "Satır Sayısı", minval = 10, maxval = 500, step = 10, group = "HACİM PROFİLİ", inline = "vp1")
+vpVolumeType = input.string("Toplam", title = "Hacim Tipi", options = ["Yukarı/Aşağı", "Toplam", "Delta"], group = "HACİM PROFİLİ", inline = "vp2")
+vpValueAreaPercent = input.int(70, title = "Değer Alanı %", minval = 10, maxval = 100, step = 1, group = "HACİM PROFİLİ", inline = "vp2")
+vpValueAreasef = input.int(70, title = "color ", minval = 1, maxval = 100, step = 1, group = "HACİM PROFİLİ", inline = "vp33")
+vpUpColor = input.color(color.new(color.green, 85), "Yukarı Hacim", group = "HACİM PROFİLİ", inline = "vp3")
+vpDownColor = input.color(color.new(color.red, 85), "Aşağı Hacim", group = "HACİM PROFİLİ", inline = "vp3")
+vpTotalColor = input.color(color.new(color.blue, 85), "Toplam Hacim", group = "HACİM PROFİLİ", inline = "vp4")
+vpDeltaUpColor = input.color(color.new(color.teal, 85), "Delta +", group = "HACİM PROFİLİ", inline = "vp4")
+vpDeltaDownColor = input.color(color.new(color.orange, 85), "Delta -", group = "HACİM PROFİLİ", inline = "vp4")
+vpValueAreaColor = input.color(color.new(color.orange, 5), "VA line", group = "HACİM PROFİLİ", inline = "vp5")
+vpPocColor = input.color(color.new(color.red, 30), "POC", group = "HACİM PROFİLİ", inline = "vp5")
+vpWidthPercent = input.int(40, title = "Genişlik %", minval = 10, maxval = 100, step = 5, group = "HACİM PROFİLİ", tooltip = "Kutunun yüzde kaçını kaplasın")
+showPocLine = input.bool(true, title = "POC Çizgisi", group = "HACİM PROFİLİ", inline = "vp6")
+showValueAreaLines = input.bool(true, title = "VA Çizgileri", group = "HACİM PROFİLİ", inline = "vp6")
+
+// Geçmiş kutu renkleri (saydamlık uygulanmış)
+var color histLongBoxColor = longBoxColor
+var color histLongBorder = longBoxBorder
+var color histShortBoxColor = shortBoxColor
+var color histShortBorder = shortBoxBorder
+var color histLevel25 = level25Color
+var color histLevel50 = level50Color
+var color histLevel75 = level75Color
+
+// Aktif kutu ve seviye değişkenleri
+var box currentBox = na
+var line level25Line = na
+var line level50Line = na
+var line level75Line = na
+var bool currentBoxIsLong = na
+var int currentBoxLeftBar = na
+var int currentBoxRightBar = na
+var float currentBoxTop = na
+var float currentBoxBottom = na
+
+// Geçmiş kutuları saklamak için array'ler
+var box[] historyBoxes = array.new_box()
+var line[] historyLevel25 = array.new_line()
+var line[] historyLevel50 = array.new_line()
+var line[] historyLevel75 = array.new_line()
+
+// ==================== HACİM PROFİLİ DEĞİŞKENLERİ ====================
+var box[] vpBoxes = array.new_box()
+var line pocLine = na
+var line vahLine = na
+var line valLine = na
+
+// Hacim profili kutularını temizle
+clearVolumeProfile() =>
+    if array.size(vpBoxes) > 0
+        for i = 0 to array.size(vpBoxes) - 1
+            box.delete(array.get(vpBoxes, i))
+        array.clear(vpBoxes)
+
+// ==================== HACİM PROFİLİ SONU ====================
+
+// Geçmiş kutu ekleme fonksiyonu
+addToHistory(bool isLong) =>
+    if showHistoryBoxes and not na(currentBox)
+        // Mevcut kutunun bilgilerini al
+        boxTop = box.get_top(currentBox)
+        boxBottom = box.get_bottom(currentBox)
+        boxLeft = box.get_left(currentBox)
+        boxRight = box.get_right(currentBox)
+        
+        // Eski kutuyu sil
+        box.delete(currentBox)
+        
+        // Geçmiş renkleri belirle
+        histBgColor = isLong ? histLongBoxColor : histShortBoxColor
+        histBorderColor = isLong ? histLongBorder : histShortBorder
+        
+        // Yeni geçmiş kutusu oluştur (saydam renklerle)
+        histBox = box.new(boxLeft, boxTop, boxRight, boxBottom,
+             border_color = histBorderColor,
+             bgcolor = histBgColor,
+             border_width = 1,
+             border_style = line.style_solid)
+        
+        array.push(historyBoxes, histBox)
+        
+        // Seviye çizgilerini geçmişe ekle (renkleri değiştir)
+        if not na(level25Line)
+            line.set_color(level25Line, histLevel25)
+            array.push(historyLevel25, level25Line)
+        else
+            array.push(historyLevel25, line(na))
+            
+        if not na(level50Line)
+            line.set_color(level50Line, histLevel50)
+            array.push(historyLevel50, level50Line)
+        else
+            array.push(historyLevel50, line(na))
+            
+        if not na(level75Line)
+            line.set_color(level75Line, histLevel75)
+            array.push(historyLevel75, level75Line)
+        else
+            array.push(historyLevel75, line(na))
+        
+        // Geçmiş kutu sayısı limiti aşarsa en eskisini sil
+        if array.size(historyBoxes) > historyBoxCount
+            oldBox = array.shift(historyBoxes)
+            oldL25 = array.shift(historyLevel25)
+            oldL50 = array.shift(historyLevel50)
+            oldL75 = array.shift(historyLevel75)
+            
+            box.delete(oldBox)
+            line.delete(oldL25)
+            line.delete(oldL50)
+            line.delete(oldL75)
+
+// Kutu çizim fonksiyonu
+drawZigzagBox(float topPrice, float bottomPrice, int leftBar, int rightBar, bool isLong) =>
+    box resultBox = na
+    line resultL25 = na
+    line resultL50 = na
+    line resultL75 = na
+    
+    if showBox
+        // Mevcut kutuyu geçmişe ekle (eğer varsa)
+        if not na(currentBox)
+            addToHistory(currentBoxIsLong)
+        
+        // Eğer geçmiş kutular gösterilmeyecekse eski kutuyu sil
+        if not showHistoryBoxes
+            if not na(currentBox)
+                box.delete(currentBox)
+            if not na(level25Line)
+                line.delete(level25Line)
+            if not na(level50Line)
+                line.delete(level50Line)
+            if not na(level75Line)
+                line.delete(level75Line)
+        
+        // Kutu renklerini belirle
+        bgColor = isLong ? longBoxColor : shortBoxColor
+        borderColor = isLong ? longBoxBorder : shortBoxBorder
+        
+        // Yeni kutu çiz
+        resultBox := box.new(leftBar, topPrice, rightBar, bottomPrice, 
+             border_color = borderColor, 
+             bgcolor = bgColor, 
+             border_width = 1,
+             border_style = line.style_solid,
+             extend = extend.none)
+        
+        // Fibonacci seviyelerini hesapla
+        priceRange = topPrice - bottomPrice
+        l25 = bottomPrice + priceRange * 0.25
+        l50 = bottomPrice + priceRange * 0.50
+        l75 = bottomPrice + priceRange * 0.75
+        
+        // Seviye çizgilerini oluştur
+        if showLevels
+            resultL25 := line.new(leftBar, l25, rightBar, l25, 
+                 color = level25Color, 
+                 style = levelStyle, 
+                 width = 1)
+            resultL50 := line.new(leftBar, l50, rightBar, l50, 
+                 color = level50Color, 
+                 style = levelStyle, 
+                 width = 2)
+            resultL75 := line.new(leftBar, l75, rightBar, l75, 
+                 color = level75Color, 
+                 style = levelStyle, 
+                 width = 1)
+    
+    [resultBox, resultL25, resultL50, resultL75]
+
+// Hacim profili çizim fonksiyonu
+drawVolumeProfile(int startBar, int endBar, float highPrice, float lowPrice) =>
+    line resultPocLine = na
+    line resultVahLine = na
+    line resultValLine = na
+    
+    if showVolumeProfile and startBar < endBar and highPrice > lowPrice
+        // Önceki profili temizle
+        clearVolumeProfile()
+        
+        if not na(pocLine)
+            line.delete(pocLine)
+        if not na(vahLine)
+            line.delete(vahLine)
+        if not na(valLine)
+            line.delete(valLine)
+        
+        // Fiyat aralığını satırlara böl
+        priceRange = highPrice - lowPrice
+        rowHeight = priceRange / vpRowCount
+        
+        // Her satır için hacim array'leri
+        upVolumes = array.new_float(vpRowCount, 0.0)
+        downVolumes = array.new_float(vpRowCount, 0.0)
+        totalVolumes = array.new_float(vpRowCount, 0.0)
+        
+        // Bar sayısını hesapla
+        barCount = endBar - startBar
+        
+        // Her bar için hacmi ilgili fiyat seviyesine dağıt
+        for i = 0 to barCount
+            offset = endBar - startBar - i
+            if offset >= 0 and offset <= bar_index
+                barHigh = high[offset]
+                barLow = low[offset]
+                barClose = close[offset]
+                barOpen = open[offset]
+                barVol = volume[offset]
+                
+                // Mum bu aralıkta mı kontrol et
+                if barHigh >= lowPrice and barLow <= highPrice
+                    // Mumun kapsadığı fiyat aralığı
+                    candleRange = barHigh - barLow
+                    if candleRange > 0
+                        // Yukarı/aşağı mum belirleme
+                        isUpCandle = barClose >= barOpen
+                        
+                        // Mumun her satırla kesişimini kontrol et
+                        for j = 0 to vpRowCount - 1
+                            rowLow = lowPrice + (j * rowHeight)
+                            rowHigh = rowLow + rowHeight
+                            
+                            // Satır ile mum kesişimi
+                            overlapLow = math.max(barLow, rowLow)
+                            overlapHigh = math.min(barHigh, rowHigh)
+                            
+                            if overlapHigh > overlapLow
+                                // Kesişim oranına göre hacmi dağıt
+                                overlapRatio = (overlapHigh - overlapLow) / candleRange
+                                volContribution = barVol * overlapRatio
+                                
+                                if isUpCandle
+                                    array.set(upVolumes, j, array.get(upVolumes, j) + volContribution)
+                                else
+                                    array.set(downVolumes, j, array.get(downVolumes, j) + volContribution)
+                                
+                                array.set(totalVolumes, j, array.get(totalVolumes, j) + volContribution)
+        
+        // Maksimum hacmi bul (POC için)
+        float maxVolume = 0.0
+        int pocIndex = 0
+        float totalVolumeSum = 0.0
+        
+        for i = 0 to vpRowCount - 1
+            vol = array.get(totalVolumes, i)
+            totalVolumeSum += vol
+            if vol > maxVolume
+                maxVolume := vol
+                pocIndex := i
+        
+        // Değer alanını hesapla (Value Area)
+        float vaVolumeTarget = totalVolumeSum * (vpValueAreaPercent / 100.0)
+        float vaVolume = array.get(totalVolumes, pocIndex)
+        int vaHighIdx = pocIndex
+        int vaLowIdx = pocIndex
+        
+        while vaVolume < vaVolumeTarget and (vaHighIdx < vpRowCount - 1 or vaLowIdx > 0)
+            float upVol = vaHighIdx < vpRowCount - 1 ? array.get(totalVolumes, vaHighIdx + 1) : 0.0
+            float dnVol = vaLowIdx > 0 ? array.get(totalVolumes, vaLowIdx - 1) : 0.0
+            
+            if upVol >= dnVol and vaHighIdx < vpRowCount - 1
+                vaHighIdx += 1
+                vaVolume += upVol
+            else if vaLowIdx > 0
+                vaLowIdx -= 1
+                vaVolume += dnVol
+            else if vaHighIdx < vpRowCount - 1
+                vaHighIdx += 1
+                vaVolume += upVol
+            else
+                break
+        
+        // Kutu genişliğini hesapla
+        boxWidth = math.round((endBar - startBar) * (vpWidthPercent / 100.0))
+        if boxWidth < 1
+            boxWidth := 1
+        
+        // Hacim profilini çiz
+        if maxVolume > 0
+            for i = 0 to vpRowCount - 1
+                rowLow = lowPrice + (i * rowHeight)
+                rowHigh = rowLow + rowHeight
+                
+                upVol = array.get(upVolumes, i)
+                downVol = array.get(downVolumes, i)
+                totalVol = array.get(totalVolumes, i)
+                
+                if totalVol > 0
+                    // Normalize edilmiş genişlik
+                    volRatio = totalVol / maxVolume
+                    barWidth = math.round(boxWidth * volRatio)
+                    if barWidth < 1
+                        barWidth := 1
+                    
+                    // Değer alanı içinde mi?
+                    inValueArea = i >= vaLowIdx and i <= vaHighIdx
+                    
+                    if vpVolumeType == "Yukarı/Aşağı"
+                        // Yukarı hacim kutusu
+                        if upVol > 0
+                            upWidth = math.round(barWidth * (upVol / totalVol))
+                            if upWidth > 0
+                                upBox = box.new(startBar, rowHigh, startBar + upWidth, rowLow,
+                                     border_color = color.new(vpUpColor, 100),
+                                     bgcolor = inValueArea ? color.new(vpUpColor, vpValueAreasef) : vpUpColor)
+                                array.push(vpBoxes, upBox)
+                        
+                        // Aşağı hacim kutusu
+                        if downVol > 0
+                            upWidth = math.round(barWidth * (upVol / totalVol))
+                            downWidth = barWidth - upWidth
+                            if downWidth > 0
+                                downBox = box.new(startBar + upWidth, rowHigh, startBar + upWidth + downWidth, rowLow,
+                                     border_color = color.new(vpDownColor, 100),
+                                     bgcolor = inValueArea ? color.new(vpDownColor, vpValueAreasef) : vpDownColor)
+                                array.push(vpBoxes, downBox)
+                    
+                    else if vpVolumeType == "Toplam"
+                        totalBox = box.new(startBar, rowHigh, startBar + barWidth, rowLow,
+                             border_color = color.new(vpTotalColor, 100),
+                             bgcolor = inValueArea ? color.new(vpTotalColor, vpValueAreasef) : vpTotalColor)
+                        array.push(vpBoxes, totalBox)
+                    
+                    else if vpVolumeType == "Delta"
+                        deltaVal = upVol - downVol
+                        deltaColor = deltaVal >= 0 ? vpDeltaUpColor : vpDeltaDownColor
+                        deltaBox = box.new(startBar, rowHigh, startBar + barWidth, rowLow,
+                             border_color = color.new(deltaColor, 100),
+                             bgcolor = inValueArea ? color.new(deltaColor, vpValueAreasef) : deltaColor)
+                        array.push(vpBoxes, deltaBox)
+        
+        // POC çizgisi
+        if showPocLine
+            pocPrice = lowPrice + (pocIndex * rowHeight) + (rowHeight / 2)
+            resultPocLine := line.new(startBar, pocPrice, bar_index, pocPrice,
+                 color = vpPocColor, width = 2, style = line.style_solid)
+        
+        // Value Area çizgileri
+        if showValueAreaLines
+            vahPrice = lowPrice + ((vaHighIdx + 1) * rowHeight)
+            valPrice = lowPrice + (vaLowIdx * rowHeight)
+            
+            resultVahLine := line.new(startBar, vahPrice, bar_index, vahPrice,
+                 color = vpValueAreaColor, width = 1, style = line.style_solid)
+            resultValLine := line.new(startBar, valPrice, bar_index, valPrice,
+                 color = vpValueAreaColor, width = 1, style = line.style_solid)
+    
+    [resultPocLine, resultVahLine, resultValLine]
+
+// Aktif kutuyu sağa uzatma fonksiyonu (sadece aktif kutu uzar)
+updateBoxRight() =>
+    if showBox and not na(currentBox)
+        box.set_right(currentBox, bar_index)
+        if showLevels
+            if not na(level25Line)
+                line.set_x2(level25Line, bar_index)
+            if not na(level50Line)
+                line.set_x2(level50Line, bar_index)
+            if not na(level75Line)
+                line.set_x2(level75Line, bar_index)
+        // Hacim profili çizgilerini de uzat
+        if showVolumeProfile
+            if not na(pocLine)
+                line.set_x2(pocLine, bar_index)
+            if not na(vahLine)
+                line.set_x2(vahLine, bar_index)
+            if not na(valLine)
+                line.set_x2(valLine, bar_index)
+
+// ==================== KUTU AYARLARI SONU ====================
+
+var bool showMn = false
+
+var bool showDolar = false
+
+var bool mnUp = na
+var bool mnDn = na
+var bool mainUp = true
+var bool mainDn = true
+var bool bull = false
+var bool bear = false
+
+var top = high
+var bot = low
+var puUp = high
+var puDn = low
+var lastTop = high
+var lastBot = low
+var mainH = high
+var mainL = low
+var maksMum = high
+var minMum = low
+var int maksMumBar = na
+var int minMumBar = na
+var lastHH = mainH
+var lastLL = mainL
+var int mainHBar = na
+var int mainLBar = na
+var int refBar = na
+var int lastRefBar = na
+var bool yon = false
+var ref = bar_index
+var int puUpbar = bar_index
+var int puDnbar = bar_index
+var bool firsStart = true
+var int anaMumZigzag = na
+var bool PBYon = false
+var bool isHUp = true
+var bool isLDn = true
+
+mnMark(bool UD) =>
+    if showMn 
+        label.new(
+         x = UD ? puUpbar : puDnbar,
+         y = UD ? puUp : puDn,
+         yloc = UD ? yloc.abovebar : yloc.belowbar,
+         text = "",
+         color = UD ? color.red : color.green,
+         style = UD ? label.style_arrowdown : label.style_arrowup,
+         size = size.tiny
+         )
+
+anaMumMarkl(bool UD) =>
+    if cizgi
+        line.new( UD ? mainHBar : mainLBar, UD ? mainH : mainL, bar_index, UD ? mainH : mainL, color = settColorclose, style = lineStyleclose, width = lwitdh1)
+
+anaMumMark2(bool UD) =>
+    if cizgi1
+        line.new( UD ? mainHBar : mainLBar, UD ? mainH : mainL, bar_index, UD ? mainH : mainL, color = settColorsweep, style = lineStylesweep, width = lwitdh2)
+    
+anaMumMark(bool UD) =>
+    if showDolar
+        label.new(
+         x = UD ? mainHBar : mainLBar,
+         y = UD ? mainH : mainL,
+         yloc = UD ? yloc.abovebar : yloc.belowbar,
+         text = UD ? "$" : "$",
+         color = color.rgb(255, 235, 59, 95),
+         textcolor = UD ? color.green : color.red ,
+         style = UD ? label.style_label_center : label.style_label_center
+         )
+    if zigzag
+        line.new(mainHBar,high[bar_index-mainHBar],mainLBar,low[bar_index-mainLBar],color = settColor,width = lwitdh ,style = lineStyle)
+
+// Her bar'da aktif kutuyu sağa uzat
+updateBoxRight()
+
+if time > timetest
+    if ( high > low ) and bar_index>last_bar_index - uzunluk 
+
+        if high <= top and top > lastTop 
+            puUpbar := refBar
+            puUp:= top
+            mnMark(true)
+
+            maksMum := top
+            maksMumBar := refBar
+            if maksMum > mainH 
+                mainH := maksMum
+                mainHBar := maksMumBar
+
+        if low >= bot and bot < lastBot      
+            puDnbar := refBar
+            puDn := bot 
+            mnMark(false)
+            minMum := bot
+            minMumBar := refBar
+            if minMum < mainL
+                mainLBar := minMumBar
+                mainL := minMum
+
+        if low < mainL and lastLL != mainL
+            if close < mainL   
+                if not yon
+                    if zigzag
+                        line.new(mainHBar,high[bar_index-mainHBar],mainLBar,low[bar_index-mainLBar],width = lwitdh, style = lineStyle,color = settColor)
+
+                mainHBar := bar_index
+                mainH := high
+                for i = 1 to bar_index-mainLBar
+                    if high[i]  > mainH 
+                        mainH := high[i]
+                        mainHBar := bar_index-i
+                
+                anaMumMark(true)
+                anaMumMark(false)
+                anaMumMarkl(false)
+                anaMumMarkl(true)
+                
+                // ==================== SHORT YÖNLÜ KUTU ÇİZ ====================
+                boxLeftBar = math.min(mainLBar, mainHBar)
+                [newBox, newL25, newL50, newL75] = drawZigzagBox(mainH, mainL, boxLeftBar, bar_index, false)
+                currentBox := newBox
+                level25Line := newL25
+                level50Line := newL50
+                level75Line := newL75
+                currentBoxIsLong := false
+                currentBoxLeftBar := boxLeftBar
+                currentBoxTop := mainH
+                currentBoxBottom := mainL
+                
+                // Hacim profilini çiz
+                [newPocLine, newVahLine, newValLine] = drawVolumeProfile(boxLeftBar, bar_index, mainH, mainL)
+                pocLine := newPocLine
+                vahLine := newVahLine
+                valLine := newValLine
+                // ==================== SHORT KUTU SONU ====================
+                
+                yon := false
+                
+                lastLL := mainL
+            else if barstate.isconfirmed
+                if cizgi1
+                    anaMumMark2(false)
+                lastLL := mainL
+                mainL := low
+
+        if high > mainH and lastHH != mainH
+            if close > mainH 
+                if yon
+                    if zigzag
+                        line.new(mainHBar,high[bar_index-mainHBar],mainLBar,low[bar_index-mainLBar],width = lwitdh, style = lineStyle,color = settColor)
+
+                mainLBar := bar_index
+                mainL := low
+                for i = 1 to bar_index-mainHBar
+                    if low[i]  < mainL
+                        mainL := low[i]
+                        mainLBar := bar_index-i    
+      
+                anaMumMark(false)
+                anaMumMark(true)
+                anaMumMarkl(false)
+                anaMumMarkl(true)
+
+                // ==================== LONG YÖNLÜ KUTU ÇİZ ====================
+                boxLeftBar = math.min(mainLBar, mainHBar)
+                [newBox, newL25, newL50, newL75] = drawZigzagBox(mainH, mainL, boxLeftBar, bar_index, true)
+                currentBox := newBox
+                level25Line := newL25
+                level50Line := newL50
+                level75Line := newL75
+                currentBoxIsLong := true
+                currentBoxLeftBar := boxLeftBar
+                currentBoxTop := mainH
+                currentBoxBottom := mainL
+                
+                // Hacim profilini çiz
+                [newPocLine, newVahLine, newValLine] = drawVolumeProfile(boxLeftBar, bar_index, mainH, mainL)
+                pocLine := newPocLine
+                vahLine := newVahLine
+                valLine := newValLine
+                // ==================== LONG KUTU SONU ====================
+                
+                yon := true
+                lastHH := mainH
+            else if barstate.isconfirmed
+                lastHH := mainH
+                if cizgi1
+                    anaMumMark2(true)
+                mainH := high
+
+        lastTop := top
+        top := high
+        puUpbar := bar_index
+        lastRefBar := refBar
+        refBar := bar_index
+        lastBot := bot
+        bot := low
+        puDnbar := bar_index
